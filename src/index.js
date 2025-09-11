@@ -16,7 +16,9 @@ const MONITORING_INTERVAL = 60 * 60 * 1000; // every 1 hr
 async function monitorConnections() {
   const now = Date.now();
   if (now - lastMonitoringTime > MONITORING_INTERVAL) {
-    console.info("🔍 MongoDB connection check - idle connection management active");
+    console.info(
+      "🔍 MongoDB connection check - idle connection management active",
+    );
     lastMonitoringTime = now;
   }
 }

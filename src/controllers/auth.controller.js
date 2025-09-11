@@ -11,7 +11,7 @@ export const generateAccessAndRefreshTokens = async (userId) => {
     const refreshToken = user.generateRefreshToken();
 
     user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
+    await user.save({ validateBeforeSave: false }); // --> here not working validations
     return { accessToken, refreshToken };
   } catch (error) {
     throw new ApiError(
