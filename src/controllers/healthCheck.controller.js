@@ -15,7 +15,15 @@ const healthCheck = async (req, res, next) => {
 */
 
 const healthCheck = asyncHandler(async (req, res) => {
-  res.status(200).json(new ApiResponse(200, { message: "Server is running" }));
+  res.status(200).json(new ApiResponse(200, 
+    { 
+      message: "Server is running",
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      memory: process.memoryUsage(),
+      cpu: process.cpuUsage(),
+    }));
 });
 
 export { healthCheck };

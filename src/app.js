@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors";
-import { connectDB, resetIdleTimer } from "./db/db.js";
-import { shouldSkipDb } from "./utils/skipDb.js";
+
+// Routes
+import apiRoutes from "./apiRoutes.js";
 
 const app = express();
 
@@ -20,26 +21,8 @@ app.use(
   }),
 );
 
-//  Lazy DB connect middleware
-app.use(async (req, res, next) => {
-  try {
-    if (!shouldSkipDb(req.path)) {
-      await connectDB(); // connect only when needed
-      resetIdleTimer(); // reset idle timer
-    }
-    next();
-  } catch (error) {
-    console.error("MongoDB connection error:", error.message);
-    return res.status(500).json({ error: "Database connection error" });
-  }
-});
 
-// Routes
-import healthCheck from "./routes/healthCheck.routes.js";
-import authRouter from "./routes/auth.routes.js";
-
-app.use("/api/v1/healthCheck", healthCheck);
-app.use("/api/v1/auth", authRouter);
+app.use("/api", apiRoutes);
 
 // Health monitoring route
 app.get("/health", (req, res) => {
@@ -61,14 +44,6 @@ app.get("/health", (req, res) => {
   });
 });
 
-if (process.env.NODE_ENV !== "production") {
-  app.get("/dbString", (req, res) => {
-    return res.status(200).json({
-      message: `DB mode: ${process.env.NODE_ENV}`,
-      uri: process.env.MONGO_URI_LOCAL,
-    });
-  });
-}
 
 app.get("/", (req, res) => {
   res.send("<h1>Aajao Backend pe </h1>");

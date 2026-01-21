@@ -1,35 +1,47 @@
 import dotenv from "dotenv";
 import app from "./app.js";
+import { connectDB, disconnectDB, getConnectionState } from "./db/db.js";
 
 dotenv.config({ path: "./.env" });
 
 const PORT = process.env.PORT || 3000;
 
-const server = app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Start server
+const startServer = async () => {
+  try {
+    // Connect to database first
+    await connectDB();
 
-// Connection monitoring stats
-let lastMonitoringTime = Date.now();
-const MONITORING_INTERVAL = 60 * 60 * 1000; // every 1 hr
+    // Start HTTP server
+    const server = app.listen(PORT, () => {
+      console.log(`🚀 Server: http://localhost:${PORT}`);
+      console.log(`📊 DB State: ${getConnectionState()}`);
+    });
 
-async function monitorConnections() {
-  const now = Date.now();
-  if (now - lastMonitoringTime > MONITORING_INTERVAL) {
-    console.info(
-      "🔍 MongoDB connection check - idle connection management active",
-    );
-    lastMonitoringTime = now;
+    // Graceful shutdown
+    const shutdown = async (signal) => {
+      console.log(`\n${signal} received. Shutting down...`);
+
+      server.close(async () => {
+        await disconnectDB();
+        console.log("👋 Goodbye!");
+        process.exit(0);
+      });
+
+      // Force exit after 10 seconds
+      setTimeout(() => {
+        console.error("  Forced exit");
+        process.exit(1);
+      }, 10000);
+    };
+
+    process.on("SIGINT", () => shutdown("SIGINT"));
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+
+  } catch (error) {
+    console.error(" Startup failed:", error.message);
+    process.exit(1);
   }
-}
-setInterval(monitorConnections, MONITORING_INTERVAL);
+};
 
-// Graceful Shutdown
-process.on("SIGINT", () => {
-  console.log("🛑 Shutting down app...");
-  server.close(() => process.exit(0));
-});
-process.on("SIGTERM", () => {
-  console.log("🛑 App terminated...");
-  server.close(() => process.exit(0));
-});
+startServer();
