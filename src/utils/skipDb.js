@@ -8,3 +8,9 @@
 //   // prefix match routes
 //   return prefixSkip.some((route) => path.startsWith(route));
 // };
+
+
+// curretnt slot and uske baad ka slot
+// services --> only opd services aani chaiye
+// appointment --> by default aaj ki dekhna ho or to date lga ke dekh lu 
+// payment conformh hai status update nhi ho rha hai na appointment ka 
