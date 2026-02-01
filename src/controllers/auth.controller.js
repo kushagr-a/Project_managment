@@ -147,6 +147,80 @@ export const logoutUser = asyncHandler(async (req, res) => {
     )
 })
 
+// Verify Email
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const { verificationToken } = req.params;
+
+  if (!verificationToken) {
+    throw new ApiError(400, "Verification token is missing")
+  }
+
+  let hashedToken = crypto
+    .createHash("sha256")
+    .update(verificationToken)
+    .digest("hex");
+
+  const user = await User.findOne({
+    emailVerificationToken: hashedToken,
+    emailVerificationExpiry: { $gt: Date.now() }
+  });
+
+  if (!user) {
+    throw new ApiError(400, "Invalid verification token")
+  }
+
+  user.emailVerificationToken = undefined;
+  user.emailVerificationExpiry = undefined;
+
+  user.isEmailVerified = true;
+  await user.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200,
+        { isEmailVerified: true },
+        "Email verified successfully",
+      )
+    )
+})
+
+export const resendVerificationEmail = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user?._id)
+
+  if (!user) {
+    throw new ApiError(404, "User not found")
+  }
+
+  if (user.isEmailVerified) {
+    throw new ApiError(409, "Email already verified")
+
+  }
+
+  const { unHashedToken, hashedToken, tokenExpiry } = user.generateTemporaryToken();
+
+  user.emailVerificationToken = hashedToken;
+  user.emailVerificationExpiry = tokenExpiry;
+
+  await user.save({ validateBeforeSave: false });
+  await sendEmail({
+    email: user?.email,
+    subject: "Please verify your email",
+    mailgenContent: emailVerificationMailgenContent(
+      user.username,
+      `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`,
+    ),
+  })
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200,
+        {},
+        "Email verification email has been sent on your email",
+      )
+    )
+})
+
 // Fetching Current User
 export const getCurrentUser = asyncHandler(async (req, res) => {
   return res
@@ -159,3 +233,4 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
       )
     )
 })
+
