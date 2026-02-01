@@ -147,6 +147,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
     )
 })
 
+// Fetching Current User
 export const getCurrentUser = asyncHandler(async (req, res) => {
   return res
     .status(200)
