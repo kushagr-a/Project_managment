@@ -8,4 +8,4 @@ apiRoutes.use("/healthCheck", healthCheckRoutes);
 
 apiRoutes.use("/auth", authRoutes);
 
-export default apiRoutes;
+export default apiRoutes; 
